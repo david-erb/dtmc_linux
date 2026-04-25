@@ -4,7 +4,6 @@ CLAUDE.md
 # build artifacts
 **/build*/
 
-submodules/
 apps/test_all/test_nvblob_file.bin
 
 # mkdocs output
