@@ -25,7 +25,7 @@ if [ "$APP" = "test_all" ]; then
     cmake --build build
     build/app
     lcov --capture --directory build --output-file "$REPO_DIR/lcov.info"
-    lcov --remove "$REPO_DIR/lcov.info" '/usr/*' --output-file "$REPO_DIR/lcov.info"
+    lcov --extract "$REPO_DIR/lcov.info" "$REPO_DIR/dtmc_linux_library/*" "$REPO_DIR/dtmc_linux_tests/*" --output-file "$REPO_DIR/lcov.info"
 else
     cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     cmake --build build
