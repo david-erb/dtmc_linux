@@ -20,14 +20,6 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Debug submodules
-        run: |
-          echo "=== Submodule status ==="
-          git submodule status
-          echo ""
-          echo "=== Submodule tree ==="
-          git submodule foreach 'echo $name: && git log -1 --oneline'
-
       - name: Run
         run: bash scripts/ci_linux.sh ${{ matrix.app }}
 
