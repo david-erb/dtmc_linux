@@ -1,0 +1,9 @@
+[submodule "submodules/dtcore"]
+	path = submodules/dtcore
+	url = git@github.com:david-erb/dtcore
+[submodule "submodules/dtmc_base"]
+	path = submodules/dtmc_base
+	url = git@github.com:david-erb/dtmc_base
+[submodule "submodules/dtmc_services"]
+	path = submodules/dtmc_services
+	url = git@github.com:david-erb/dtmc_services
