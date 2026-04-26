@@ -1,6 +1,6 @@
 # dtmc_linux
 
-[![CI](https://github.com/david-erb/dtmc_linux/actions/workflows/ci.yml/badge.svg)](https://github.com/david-erb/dtmc_linux/actions/workflows/ci.yml) [![Coverage](https://codecov.io/gh/david-erb/dtmc_linux/branch/main/graph/badge.svg)](https://codecov.io/gh/david-erb/dtmc_linux) [![Version](https://img.shields.io/github/v/tag/david-erb/dtmc_linux)](https://github.com/david-erb/dtmc_linux/tags) [![Platforms](https://img.shields.io/badge/platform-Linux-lightgrey)](https://david-erb.github.io/dtmc_linux/)
+[![CI](https://github.com/david-erb/dtmc_linux/actions/workflows/ci.yml/badge.svg)](https://github.com/david-erb/dtmc_linux/actions/workflows/ci.yml) [![Version](https://img.shields.io/github/v/tag/david-erb/dtmc_linux)](https://github.com/david-erb/dtmc_linux/tags) [![Platforms](https://img.shields.io/badge/platform-Linux-lightgrey)](https://david-erb.github.io/dtmc_linux/)
 
 Linux implementations of the `dtmc_base` porting contracts — CAN bus, Modbus RTU/TCP, TCP sockets, TTY, WebSocket, CoAP, MQTT, HTTP, SDL display, and file-backed NVS — plus a set of demo and service applications that exercise each one.
 

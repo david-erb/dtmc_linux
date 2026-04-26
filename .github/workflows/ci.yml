@@ -23,8 +23,3 @@ jobs:
       - name: Run
         run: bash scripts/ci_linux.sh ${{ matrix.app }}
 
-      - name: Upload coverage
-        if: matrix.app == 'test_all'
-        uses: codecov/codecov-action@v4
-        with:
-          files: lcov.info
