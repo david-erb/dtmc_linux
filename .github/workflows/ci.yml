@@ -14,10 +14,23 @@ jobs:
     strategy:
       matrix:
         app: [test_all]
+
     steps:
       - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Debug submodules
+        run: |
+          echo "=== Submodule status ==="
+          git submodule status
+          echo ""
+          echo "=== Submodule tree ==="
+          git submodule foreach 'echo $name: && git log -1 --oneline'
+
       - name: Run
         run: bash scripts/ci_linux.sh ${{ matrix.app }}
+
       - name: Upload coverage
         if: matrix.app == 'test_all'
         uses: codecov/codecov-action@v4
