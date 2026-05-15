@@ -31,4 +31,7 @@ test_dtmc_linux_matching(DTUNITTEST_SUITE_ARGS)
 
     DTUNITTEST_RUN_SUITE(test_dtmc_linux_dtnvblob);
     DTUNITTEST_RUN_SUITE(test_dtmc_linux_dttasker_registry);
+
+    DTUNITTEST_RUN_SUITE(test_dtmc_base_dthttpclient);
+    DTUNITTEST_RUN_SUITE(test_dtmc_linux_dthttpd_socket);
 }

@@ -3,6 +3,7 @@
 #include <dtcore_tests.h>
 #include <dtmc_base_tests.h>
 #include <dtmc_linux_tests.h>
+#include <dtmc_services_tests.h>
 
 int
 main(int argc, char* argv[])
@@ -20,6 +21,8 @@ main(int argc, char* argv[])
     test_dtcore_matching(&unittest_control);
 
     test_dtmc_base_matching(&unittest_control);
+
+    test_dtmc_services_matching(&unittest_control);
 
     test_dtmc_linux_matching(&unittest_control);
 

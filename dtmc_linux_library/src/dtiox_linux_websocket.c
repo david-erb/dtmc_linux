@@ -415,6 +415,22 @@ _bind_listen_accept(dtiox_linux_websocket_t* self, int* out_listen_fd, int* out_
         return dterr_new(DTERR_BADARG, DTERR_LOC, NULL, "invalid websocket bind port");
     }
 
+    // Reuse an existing listen socket rather than rebinding each time a client reconnects
+    if (self->listen_fd >= 0)
+    {
+        client_fd = accept(self->listen_fd, NULL, NULL);
+        if (client_fd < 0)
+        {
+            dterr = dterr_new(DTERR_IO, DTERR_LOC, NULL, "accept() failed: %s", strerror(errno));
+            goto cleanup;
+        }
+        DTERR_C(_set_socket_common_options(client_fd, &self->config));
+        *out_listen_fd = self->listen_fd;
+        *out_client_fd = client_fd;
+        client_fd = -1;
+        goto cleanup;
+    }
+
     snprintf(port_str, sizeof(port_str), "%d", self->config.local_bind_port);
     port_str[sizeof(port_str) - 1] = '\0';
 
@@ -735,6 +751,21 @@ dtiox_linux_websocket_write(dtiox_linux_websocket_t* self DTIOX_WRITE_ARGS)
         return dterr_new(DTERR_IO, DTERR_LOC, NULL, "websocket not attached");
     }
 
+    // Detect peer close before writing.
+    // n == 0: peer sent FIN. n > 0: peer sent a WS close/ping frame.
+    // Since this server never reads, any readable data means the peer is closing.
+    // Only EAGAIN/EWOULDBLOCK (n < 0) means the connection is alive.
+    {
+        uint8_t probe;
+        ssize_t n = recv(self->client_fd, &probe, 1, MSG_PEEK | MSG_DONTWAIT);
+        if (n >= 0)
+        {
+            dtlog_info(TAG, "websocket peer closed connection");
+            dterr = dterr_new(DTERR_IO, DTERR_LOC, NULL, "websocket peer closed");
+            goto cleanup;
+        }
+    }
+
     // Important semantic:
     // one write() call => one complete websocket binary message.
     DTERR_C(_send_ws_binary_frame(self->client_fd, buf, (uint64_t)len));
@@ -746,7 +777,6 @@ cleanup:
     {
         self->is_connected = false;
         _close_if_open(&self->client_fd);
-        _close_if_open(&self->listen_fd);
         dterr = dterr_new(dterr->error_code, DTERR_LOC, dterr, "websocket write failed");
     }
     return dterr;

@@ -17,3 +17,5 @@ extern void test_dtmc_linux_dtbufferqueue(DTUNITTEST_SUITE_ARGS);
 extern void test_dtnetportal_mosquitto(DTUNITTEST_SUITE_ARGS);
 
 extern void test_dtnetportal_coap(DTUNITTEST_SUITE_ARGS);
+
+extern void test_dtmc_linux_dthttpd_socket(DTUNITTEST_SUITE_ARGS);
