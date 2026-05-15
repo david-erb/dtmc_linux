@@ -16,9 +16,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <dtcore/dtbuffer.h>
 #include <dtcore/dterr.h>
 #include <dtcore/dtheaper.h>
 #include <dtcore/dtlog.h>
+#include <dtcore/dtstr.h>
 
 #include <dtmc_base/dtlock.h>
 #include <dtmc_base/dtmc_base_constants.h>
@@ -27,7 +29,7 @@
 #include <dtmc/dthttpd_linux_socket.h>
 
 #define TAG "dthttpd_linux_socket"
-// #define dtlog_debug(...)
+#define dtlog_debug(...)
 
 // vtable
 DTHTTPD_INIT_VTABLE(dthttpd_linux_socket);
@@ -51,6 +53,9 @@ struct dthttpd_linux_socket_t
 
     bool _is_malloced;
     dthttpd_linux_socket_config_t config;
+
+    dthttpd_post_callback_t post_callback;
+    void* post_callback_context;
 
     int listen_fd;
     bool is_started;
@@ -748,30 +753,34 @@ static dterr_t*
 _handle_post(struct dthttpd_linux_socket_t* self, int client_fd, const char* path, void* body, int32_t body_size)
 {
     dterr_t* dterr = NULL;
-    void* response = NULL;
-    int32_t response_size = 0;
+    dtbuffer_t payload_buf = { 0 };
+    dtbuffer_t* response = NULL;
     const char* content_type = "application/octet-stream";
     int32_t status_code = 200;
 
-    if (!self->config.post_callback)
+    if (!self->post_callback)
     {
         DTERR_C(_send_text_response(client_fd, 405, "POST not configured"));
         goto cleanup;
     }
 
-    DTERR_C(self->config.post_callback(
-      self->config.post_callback_context, path, body, body_size, &response, &response_size, &content_type, &status_code));
+    if (body != NULL && body_size > 0)
+        DTERR_C(dtbuffer_wrap(&payload_buf, body, body_size));
 
-    if (response_size < 0)
-    {
-        dterr = dterr_new(DTERR_RANGE, DTERR_LOC, NULL, "post callback returned negative response size");
-        goto cleanup;
-    }
+    DTERR_C(self->post_callback(
+      self->post_callback_context, path, &payload_buf, &response, &content_type, &status_code));
 
-    DTERR_C(_send_response(client_fd, status_code, content_type, response, response_size, true));
+    DTERR_C(_send_response(
+      client_fd,
+      status_code,
+      content_type,
+      response != NULL ? response->payload : NULL,
+      response != NULL ? response->length : 0,
+      true));
 
 cleanup:
-    dtheaper_free(response);
+    if (response != NULL)
+        dtbuffer_dispose(response);
     return dterr;
 }
 
@@ -1092,7 +1101,7 @@ _accept_task_entry(void* arg, dttasker_handle self_task)
     DTERR_ASSERT_NOT_NULL(self);
     DTERR_C(dttasker_ready(self_task));
 
-    dtlog_info(
+    dtlog_debug(
       TAG, "HTTP server started on %s:%d", self->config.bind_host ? self->config.bind_host : "0.0.0.0", self->config.bind_port);
 
     for (;;)
@@ -1386,6 +1395,19 @@ cleanup:
 // --------------------------------------------------------------------------------------
 
 dterr_t*
+dthttpd_linux_socket_set_callback(dthttpd_linux_socket_t* self, dthttpd_post_callback_t callback, void* context)
+{
+    dterr_t* dterr = NULL;
+    DTERR_ASSERT_NOT_NULL(self);
+    self->post_callback = callback;
+    self->post_callback_context = context;
+cleanup:
+    return dterr;
+}
+
+// --------------------------------------------------------------------------------------
+
+dterr_t*
 dthttpd_linux_socket_loop(dthttpd_linux_socket_t* self)
 {
     dterr_t* dterr = NULL;
@@ -1441,6 +1463,8 @@ dthttpd_linux_socket_stop(dthttpd_linux_socket_t* self)
         DTERR_C(dttasker_stop(self->accept_tasker_handle));
     }
 
+    if (self->listen_fd >= 0)
+        shutdown(self->listen_fd, SHUT_RDWR);
     _close_if_open(&self->listen_fd);
 
     DTERR_C(dtlock_acquire(self->lock));
@@ -1531,6 +1555,33 @@ dthttpd_linux_socket_join(dthttpd_linux_socket_t* self, dttimeout_millis_t timeo
     self->active_client_count = 0;
 
 cleanup:
+    return dterr;
+}
+
+// --------------------------------------------------------------------------------------
+
+dterr_t*
+dthttpd_linux_socket_concat_format(dthttpd_linux_socket_t* self DTHTTPD_CONCAT_FORMAT_ARGS)
+{
+    dterr_t* dterr = NULL;
+    char* s = in_str;
+    DTERR_ASSERT_NOT_NULL(self);
+    DTERR_ASSERT_NOT_NULL(out_str);
+
+    const char* host = self->config.bind_host ? self->config.bind_host : "0.0.0.0";
+    const char* display_host = (strcmp(host, "0.0.0.0") == 0 || strcmp(host, "::") == 0) ? "localhost" : host;
+    s = dtstr_concat_format(s, separator, "http://%s:%d", display_host, self->config.bind_port);
+
+    for (int32_t i = 0; i < self->config.static_directory_count; i++)
+    {
+        char resolved[PATH_MAX];
+        const char* path = self->config.static_directories[i];
+        const char* fq = realpath(path, resolved) ? resolved : path;
+        s = dtstr_concat_format(s, separator, "webroot {%s}", fq);
+    }
+
+cleanup:
+    *out_str = s;
     return dterr;
 }
 

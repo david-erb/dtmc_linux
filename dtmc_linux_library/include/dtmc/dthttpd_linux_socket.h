@@ -42,10 +42,6 @@ typedef struct dthttpd_linux_socket_config_t
     const char** static_directories;
     int32_t static_directory_count;
 
-    // POST callback
-    dthttpd_post_callback_t post_callback;
-    void* post_callback_context;
-
     // optional dttasker reporting hook
     dttasker_info_callback_t tasker_info_callback_fn;
     void* tasker_info_callback_context;

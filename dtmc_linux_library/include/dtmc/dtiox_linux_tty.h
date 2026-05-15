@@ -18,6 +18,7 @@
 #include <dtcore/dtobject.h>
 
 #include <dtmc_base/dtiox.h>
+#include <dtmc_base/dttasker.h>
 #include <dtmc_base/dtuart_helpers.h>
 
 // forward-declare concrete type

@@ -60,4 +60,14 @@ message(STATUS "libmodbus version: ${MODBUS_VERSION}")
 message(STATUS "libmodbus include dirs: ${MODBUS_INCLUDE_DIRS}")
 message(STATUS "libmodbus libs: ${MODBUS_LIBRARIES}")
 
+# --- libcurl dependency using pkg-config -------------------------------------
+pkg_check_modules(CURL REQUIRED IMPORTED_TARGET libcurl)
+
+target_link_libraries(dtmc_linux_library
+    PUBLIC
+        PkgConfig::CURL
+)
+
+message(STATUS "libcurl version: ${CURL_VERSION}")
+
 # -----------------------------------------------------------------------------

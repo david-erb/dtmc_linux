@@ -26,6 +26,7 @@ target_include_directories(dtmc_linux_tests
 
 target_link_libraries(dtmc_linux_tests
     PUBLIC
+        dtmc_services_tests
         dtmc_base_tests
         dtmc_linux_library
         dtcore_library
